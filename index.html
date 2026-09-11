@@ -87,7 +87,7 @@
             <!-- Acciones Post-Captura con Mensaje y Redes Sociales -->
             <div id="actionButtons" class="hidden space-y-2">
                 <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 text-center">
-                    <p class="text-xs text-amber-300 font-bold">¡Fotografía guardada con éxito! 🎉</p>
+                    <p class="text-xs text-amber-300 font-bold">¡Fotografía lista con éxito! 🎉</p>
                     <p class="text-[10px] text-slate-300 mt-0.5">Etiquétanos en tus redes sociales:</p>
                     <p class="text-[11px] text-amber-400 font-mono font-semibold">@HREstudioFotografia</p>
                 </div>
@@ -95,9 +95,9 @@
                     <button onclick="retakePhoto()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold py-3 rounded-xl text-xs transition">
                         🔄 Tomar otra
                     </button>
-                    <a id="downloadBtn" download="HR-Estudio-Recuerdo.png" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs transition text-center flex items-center justify-center gap-1 shadow-lg">
-                        📥 Descargar Foto
-                    </a>
+                    <button onclick="downloadOrSharePhoto()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs transition text-center flex items-center justify-center gap-1 shadow-lg">
+                        📥 Guardar / Compartir
+                    </button>
                 </div>
             </div>
         </div>
@@ -109,7 +109,7 @@
         HR Estudio Fotografía © 2026 • Todos los derechos reservados
     </footer>
 
-    <!-- Script del Motor de Filtros Estilo Instagram (Iconos Perimetrales Dinámicos) -->
+    <!-- Script del Motor de Filtros y Corrección de Descarga Móvil -->
     <script>
         const video = document.getElementById('webcam');
         const canvas3d = document.getElementById('canvas3d');
@@ -117,12 +117,12 @@
         const canvas = document.getElementById('photoCanvas');
         const captureBtn = document.getElementById('captureBtn');
         const actionButtons = document.getElementById('actionButtons');
-        const downloadBtn = document.getElementById('downloadBtn');
         const arBadge = document.getElementById('arBadge');
 
         let animationId;
         let particles = [];
         let currentSymbols = ['🌸', '✨', '🌷', '💎', '📷'];
+        let generatedImageUrl = '';
 
         async function initCamera() {
             try {
@@ -144,13 +144,10 @@
             canvas3d.height = canvas3d.offsetHeight;
         }
 
-        // Generar partículas confinadas al PERÍMETRO (evitando el centro donde va el rostro del cliente)
         function initParticles() {
             particles = [];
             for (let i = 0; i < 16; i++) {
                 const randomSymbol = currentSymbols[Math.floor(Math.random() * currentSymbols.length)];
-                
-                // Distribuir en las esquinas y orillas (evitando el centro X: 35% a 65%, Y: 30% a 70%)
                 let rx, ry;
                 if (Math.random() > 0.5) {
                     rx = Math.random() < 0.5 ? Math.random() * (canvas3d.width * 0.3) : canvas3d.width * (0.7 + Math.random() * 0.3);
@@ -163,7 +160,7 @@
                 particles.push({
                     x: rx,
                     y: ry,
-                    vx: (Math.random() - 0.5) * 5.5, // Velocidad más ágil y dinámica estilo Instagram
+                    vx: (Math.random() - 0.5) * 5.5,
                     vy: (Math.random() - 0.5) * 5.5,
                     symbol: randomSymbol,
                     size: Math.random() * 12 + 18,
@@ -181,7 +178,6 @@
                 p.y += p.vy;
                 p.angle += p.rotSpeed;
 
-                // Rebote en los bordes de la pantalla
                 if (p.x < 20 || p.x > canvas3d.width - 20) p.vx *= -1;
                 if (p.y < 20 || p.y > canvas3d.height - 20) p.vy *= -1;
 
@@ -225,14 +221,11 @@
             canvas.height = video.videoHeight || 1440;
             const ctx = canvas.getContext('2d');
             
-            // 1. Dibujar la imagen de la cámara con su filtro activo
             ctx.filter = window.getComputedStyle(video).filter;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // 2. Restaurar filtros para elementos gráficos limpios
             ctx.filter = 'none';
 
-            // Dibujar los iconos interactivos perimetrales actuales en la foto final
             const scaleX = canvas.width / canvas3d.width;
             const scaleY = canvas.height / canvas3d.height;
 
@@ -250,12 +243,10 @@
                 ctx.restore();
             });
 
-            // Marco perimetral sutil
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
             ctx.lineWidth = 6;
             ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
 
-            // Firma flotante inferior en cursiva elegante y blanca
             ctx.textAlign = 'center';
             ctx.fillStyle = '#ffffff';
             ctx.font = 'italic 34px serif';
@@ -267,15 +258,46 @@
             ctx.font = '20px sans-serif';
             ctx.fillText("Paraíso, Tabasco", canvas.width / 2, canvas.height - 55);
 
-            // Mostrar el resultado limpio en pantalla
             canvas.classList.remove('hidden');
             video.classList.add('hidden');
             canvas3d.classList.add('hidden');
             cancelAnimationFrame(animationId);
 
-            downloadBtn.href = canvas.toDataURL('image/png');
+            generatedImageUrl = canvas.toDataURL('image/png');
             captureBtn.classList.add('hidden');
             actionButtons.classList.remove('hidden');
+        }
+
+        // NUEVA FUNCIÓN: Descarga inteligente compatible con celulares (Usa Share API nativa o descarga directa forzada)
+        async function downloadOrSharePhoto() {
+            if (!generatedImageUrl) return;
+
+            // Convertir DataURL a archivo Blob
+            const response = await fetch(generatedImageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], "HR-Estudio-Recuerdo.png", { type: "image/png" });
+
+            // Si el celular soporta compartir archivos nativos (Android/iPhone modernos)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.navigator.share({
+                        files: [file],
+                        title: 'Mi foto en HR Estudio Fotografía',
+                        text: '¡Mí foto con filtro en HR Estudio Fotografía! Etiquétanos @HREstudioFotografia'
+                    });
+                    return;
+                } catch (error) {
+                    console.log("El usuario canceló o falló el share nativo, intentando descarga estándar...");
+                }
+            }
+
+            // Método de respaldo para descarga directa con enlace forzado
+            const link = document.createElement('a');
+            link.href = generatedImageUrl;
+            link.download = 'HR-Estudio-Recuerdo.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function retakePhoto() {
