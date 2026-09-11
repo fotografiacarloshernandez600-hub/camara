@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Estudio | Filtro AR Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .filter-aesthetic { filter: saturate(1.25) brightness(1.05) contrast(1.05) hue-rotate(-5deg); }
+        .filter-vintage { filter: sepia(0.45) contrast(1.1) brightness(0.92) saturate(0.85); }
+        .filter-golden { filter: sepia(0.3) saturate(1.6) brightness(1.1) contrast(1.05); }
+        .filter-cyber { filter: hue-rotate(180deg) saturate(1.8) contrast(1.2); }
+        .filter-cinematic { filter: contrast(1.3) brightness(0.95) saturate(0.9); }
+        .filter-mono { filter: grayscale(100%) contrast(1.3); }
+
+        @keyframes blinkCamera {
+            0%, 100% { opacity: 0.3; transform: scale(1); filter: drop-shadow(0 0 2px rgba(251,191,36,0.3)); }
+            50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(251,191,36,0.9)); }
+        }
+        .camera-blinking {
+            animation: blinkCamera 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between select-none overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="text-center py-3 px-4 border-b border-slate-900 bg-slate-900/50 backdrop-blur">
+        <span class="text-[10px] tracking-widest text-amber-400 uppercase font-extrabold">HR Estudio ⚡ Filtro Interactivo</span>
+        <h1 class="text-base font-extrabold text-white tracking-tight">Estudio Fotográfico AR</h1>
+    </header>
+
+    <!-- Contenedor Principal de la Cámara -->
+    <main class="max-w-md mx-auto px-4 py-2 w-full flex-grow flex flex-col justify-center items-center space-y-3">
+        
+        <!-- Vista previa de la cámara -->
+        <div id="cameraContainer" class="relative w-full aspect-[3/4] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/30 flex items-center justify-center">
+            
+            <!-- Video de la cámara -->
+            <video id="webcam" autoplay playsinline class="w-full h-full object-cover filter-aesthetic"></video>
+            
+            <!-- Lienzo 3D flotante superpuesto -->
+            <canvas id="canvas3d" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+
+            <!-- Lienzo oculto para exportar la foto final -->
+            <canvas id="photoCanvas" class="hidden w-full h-full object-cover"></canvas>
+
+            <!-- CAPA DE INTERFAZ ESTÉTICA -->
+            <div class="absolute inset-0 pointer-events-none p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span id="arBadge" class="text-[10px] uppercase tracking-widest bg-slate-950/70 text-amber-300 px-3 py-1 rounded-full backdrop-blur-md border border-amber-500/30 shadow-lg">
+                        ✨ Aesthetic Filter
+                    </span>
+                    <!-- Cámara parpadeando en tiempo real -->
+                    <div class="camera-blinking bg-slate-950/70 border border-amber-500/40 px-2.5 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-md shadow-lg">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        <span class="text-[10px] text-amber-300 font-mono font-bold">REC</span>
+                    </div>
+                </div>
+
+                <div class="text-center pb-2">
+                    <p class="text-xs italic font-light tracking-wider text-white/90 drop-shadow-md">HR Estudio Fotografía</p>
+                    <p class="text-[9px] text-white/70 tracking-widest">Paraíso, Tabasco</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selector Amplio de Filtros y Estilos -->
+        <div class="w-full space-y-1.5">
+            <p class="text-[11px] text-slate-400 text-center uppercase tracking-wider font-semibold">Elige tu Estilo y Filtro:</p>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="setTheme('aesthetic', '✨ Aesthetic', 'filter-aesthetic', ['🌸', '✨', '🌷', '💎', '📷'])" class="theme-btn bg-slate-900 border border-amber-500/50 text-amber-300 py-2 rounded-xl text-xs font-bold transition shadow">Aesthetic</button>
+                <button onclick="setTheme('vintage', '🎞️ Vintage', 'filter-vintage', ['🎞️', '🤎', '📷', '✨', '🕰️'])" class="theme-btn bg-slate-900 border border-slate-800 text-slate-300 py-2 rounded-xl text-xs transition">Vintage</button>
+                <button onclick="setTheme('golden', '🌟 Golden Hour', 'filter-golden', ['🌟', '💫', '✨', '🥂', '👑'])" class="theme-btn bg-slate-900 border border-slate-800 text-slate-300 py-2 rounded-xl text-xs transition">Golden Hour</button>
+                <button onclick="setTheme('cyber', '⚡ Cyberpunk', 'filter-cyber', ['⚡', '🤖', '🚀', '🔮', '💻'])" class="theme-btn bg-slate-900 border border-slate-800 text-slate-300 py-2 rounded-xl text-xs transition">Cyberpunk</button>
+                <button onclick="setTheme('cinematic', '🎬 Cinematic', 'filter-cinematic', ['🎬', '🎥', '⭐', '🎞️', '🏆'])" class="theme-btn bg-slate-900 border border-slate-800 text-slate-300 py-2 rounded-xl text-xs transition">Cinematic</button>
+                <button onclick="setTheme('mono', '🖤 B&W Editorial', 'filter-mono', ['🖤', '✒️', '📜', '🏛️', '✨'])" class="theme-btn bg-slate-900 border border-slate-800 text-slate-300 py-2 rounded-xl text-xs transition">B&W Clásico</button>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="w-full pt-1">
+            <button id="captureBtn" onclick="takeSnapshot()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold py-3.5 rounded-xl text-sm transition shadow-xl tracking-wider uppercase flex items-center justify-center gap-2">
+                <span>📸</span> Capturar Fotografía
+            </button>
+
+            <!-- Acciones Post-Captura con Mensaje y Redes Sociales -->
+            <div id="actionButtons" class="hidden space-y-2">
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 text-center">
+                    <p class="text-xs text-amber-300 font-bold">¡Fotografía guardada con éxito! 🎉</p>
+                    <p class="text-[10px] text-slate-300 mt-0.5">Etiquétanos en tus redes sociales:</p>
+                    <p class="text-[11px] text-amber-400 font-mono font-semibold">@HREstudioFotografia</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="retakePhoto()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold py-3 rounded-xl text-xs transition">
+                        🔄 Tomar otra
+                    </button>
+                    <a id="downloadBtn" download="HR-Estudio-Recuerdo.png" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs transition text-center flex items-center justify-center gap-1 shadow-lg">
+                        📥 Descargar Foto
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-2 text-[10px] text-slate-600 border-t border-slate-900">
+        HR Estudio Fotografía © 2026 • Todos los derechos reservados
+    </footer>
+
+    <!-- Script del Motor de Filtros Estilo Instagram (Iconos Perimetrales Dinámicos) -->
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas3d = document.getElementById('canvas3d');
+        const ctx3d = canvas3d.getContext('2d');
+        const canvas = document.getElementById('photoCanvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const actionButtons = document.getElementById('actionButtons');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const arBadge = document.getElementById('arBadge');
+
+        let animationId;
+        let particles = [];
+        let currentSymbols = ['🌸', '✨', '🌷', '💎', '📷'];
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 1080 }, height: { ideal: 1440 } }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+                setupCanvasSize();
+                initParticles();
+                animate3D();
+            } catch (err) {
+                alert("Por favor permite el acceso a la cámara para iniciar la experiencia interactiva.");
+            }
+        }
+
+        function setupCanvasSize() {
+            canvas3d.width = canvas3d.offsetWidth;
+            canvas3d.height = canvas3d.offsetHeight;
+        }
+
+        // Generar partículas confinadas al PERÍMETRO (evitando el centro donde va el rostro del cliente)
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 16; i++) {
+                const randomSymbol = currentSymbols[Math.floor(Math.random() * currentSymbols.length)];
+                
+                // Distribuir en las esquinas y orillas (evitando el centro X: 35% a 65%, Y: 30% a 70%)
+                let rx, ry;
+                if (Math.random() > 0.5) {
+                    rx = Math.random() < 0.5 ? Math.random() * (canvas3d.width * 0.3) : canvas3d.width * (0.7 + Math.random() * 0.3);
+                    ry = Math.random() * canvas3d.height;
+                } else {
+                    rx = Math.random() * canvas3d.width;
+                    ry = Math.random() < 0.5 ? Math.random() * (canvas3d.height * 0.3) : canvas3d.height * (0.7 + Math.random() * 0.3);
+                }
+
+                particles.push({
+                    x: rx,
+                    y: ry,
+                    vx: (Math.random() - 0.5) * 5.5, // Velocidad más ágil y dinámica estilo Instagram
+                    vy: (Math.random() - 0.5) * 5.5,
+                    symbol: randomSymbol,
+                    size: Math.random() * 12 + 18,
+                    angle: Math.random() * Math.PI * 2,
+                    rotSpeed: (Math.random() - 0.5) * 0.08
+                });
+            }
+        }
+
+        function animate3D() {
+            ctx3d.clearRect(0, 0, canvas3d.width, canvas3d.height);
+
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.angle += p.rotSpeed;
+
+                // Rebote en los bordes de la pantalla
+                if (p.x < 20 || p.x > canvas3d.width - 20) p.vx *= -1;
+                if (p.y < 20 || p.y > canvas3d.height - 20) p.vy *= -1;
+
+                ctx3d.save();
+                ctx3d.translate(p.x, p.y);
+                ctx3d.rotate(p.angle);
+                ctx3d.font = `${p.size}px sans-serif`;
+                ctx3d.textAlign = 'center';
+                ctx3d.textBaseline = 'middle';
+                
+                ctx3d.shadowColor = 'rgba(251, 191, 36, 0.8)';
+                ctx3d.shadowBlur = 10;
+                ctx3d.globalAlpha = 0.9;
+                
+                ctx3d.fillText(p.symbol, 0, 0);
+                ctx3d.restore();
+            });
+
+            animationId = requestAnimationFrame(animate3D);
+        }
+
+        function setTheme(themeKey, labelName, cssClass, symbolsArray) {
+            video.className = `w-full h-full object-cover ${cssClass}`;
+            arBadge.innerText = labelName;
+            currentSymbols = symbolsArray;
+            
+            particles.forEach(p => {
+                p.symbol = currentSymbols[Math.floor(Math.random() * currentSymbols.length)];
+            });
+
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('border-amber-500/50', 'text-amber-300', 'font-bold');
+                btn.classList.add('border-slate-800', 'text-slate-300');
+            });
+            event.target.classList.add('border-amber-500/50', 'text-amber-300', 'font-bold');
+            event.target.classList.remove('border-slate-800', 'text-slate-300');
+        }
+
+        function takeSnapshot() {
+            canvas.width = video.videoWidth || 1080;
+            canvas.height = video.videoHeight || 1440;
+            const ctx = canvas.getContext('2d');
+            
+            // 1. Dibujar la imagen de la cámara con su filtro activo
+            ctx.filter = window.getComputedStyle(video).filter;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // 2. Restaurar filtros para elementos gráficos limpios
+            ctx.filter = 'none';
+
+            // Dibujar los iconos interactivos perimetrales actuales en la foto final
+            const scaleX = canvas.width / canvas3d.width;
+            const scaleY = canvas.height / canvas3d.height;
+
+            particles.forEach(p => {
+                ctx.save();
+                ctx.translate(p.x * scaleX, p.y * scaleY);
+                ctx.rotate(p.angle);
+                ctx.font = `${p.size * scaleX * 0.9}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(251, 191, 36, 0.9)';
+                ctx.shadowBlur = 12;
+                ctx.globalAlpha = 0.95;
+                ctx.fillText(p.symbol, 0, 0);
+                ctx.restore();
+            });
+
+            // Marco perimetral sutil
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+
+            // Firma flotante inferior en cursiva elegante y blanca
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'italic 34px serif';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowBlur = 10;
+            ctx.fillText("HR Estudio Fotografía", canvas.width / 2, canvas.height - 90);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = '20px sans-serif';
+            ctx.fillText("Paraíso, Tabasco", canvas.width / 2, canvas.height - 55);
+
+            // Mostrar el resultado limpio en pantalla
+            canvas.classList.remove('hidden');
+            video.classList.add('hidden');
+            canvas3d.classList.add('hidden');
+            cancelAnimationFrame(animationId);
+
+            downloadBtn.href = canvas.toDataURL('image/png');
+            captureBtn.classList.add('hidden');
+            actionButtons.classList.remove('hidden');
+        }
+
+        function retakePhoto() {
+            canvas.classList.add('hidden');
+            video.classList.remove('hidden');
+            canvas3d.classList.remove('hidden');
+            actionButtons.classList.add('hidden');
+            captureBtn.classList.remove('hidden');
+            animate3D();
+        }
+
+        window.addEventListener('resize', setupCanvasSize);
+        initCamera();
+    </script>
+</body>
+</html>
